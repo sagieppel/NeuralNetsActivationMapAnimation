@@ -16,7 +16,7 @@ model_path="Model_Zoo/vgg16.npy"# "Path to pretrained vgg16 model for encoder"
 
 #-------------------------------------------------------------------------------------------------------------------------
 CheckVGG16Model.CheckVGG16(model_path)# Check if pretrained vgg16 model avialable and if not try to download it
-Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg') # 
+Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg') #
 Sy,Sx,dp=Image.shape
 
 fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
