@@ -16,11 +16,11 @@ model_path="Model_Zoo/vgg16.npy"# "Path to pretrained vgg16 model for encoder"
 
 #-------------------------------------------------------------------------------------------------------------------------
 CheckVGG16Model.CheckVGG16(model_path)# Check if pretrained vgg16 model avialable and if not try to download it
-Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg')
+Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg') # 
 Sy,Sx,dp=Image.shape
 
 fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-VidOut = cv2.VideoWriter('cat23.avi',fourcc, 24, (Sx,Sy))
+VidOut = cv2.VideoWriter('cat23.avi',fourcc, 24, (Sx,Sy)) #ouput video
 ################################################################################################################################################################################
 def main(argv=None):
       # .........................Placeholders for input image and labels........................................................................
@@ -84,7 +84,7 @@ def main(argv=None):
                Rate[i]=np.random.rand()*7+0.2
                Ly=np.random.randint(1, (Lr.__len__()))
                AcMap[i]=np.random.randint(Lr[Ly-1],Lr[Ly]+1)
-               Mx[i]=1.0/ConIm[:,:,AcMap[i]].max()
+               Mx[i]=2.0/ConIm[:,:,AcMap[i]].max()
             DispImg[:,:,i]=np.uint8(Mx[i]*ConIm[:,:,AcMap[i]]*Pos[i])
             Pos[i]+=Rate[i]
         #misc.imshow(DispImg*0.9+Image*0.1)

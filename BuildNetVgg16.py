@@ -1,8 +1,4 @@
 ################Class which build the fully convolutional neural net###########################################################
-
-import inspect
-import os
-import TensorflowUtils as utils
 import numpy as np
 import tensorflow as tf
 
