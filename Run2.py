@@ -20,8 +20,8 @@ CheckVGG16Model.CheckVGG16(model_path)# Check if pretrained vgg16 model avialabl
 Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg') # image to be use for animation
 Sy,Sx,dp=Image.shape # get image size
 
-fourcc = cv2.VideoWriter_fourcc('M','J','P','G') # Create video writer
-VidOut = cv2.VideoWriter('OutVid.avi',fourcc, 24, (Sx,Sy)) #ouput video
+fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
+VidOut = cv2.VideoWriter('NewCat.avi',fourcc, 24, (Sx,Sy)) #ouput video
 NumFrame=3000 # Number of frames in video
 ################################################################################################################################################################################
 def main(argv=None):
@@ -68,28 +68,37 @@ def main(argv=None):
     ConIm = np.concatenate((ConIm, cv2.resize(tml / tml.max(), (Sx, Sy))), axis=2)
     Lr.append(ConIm.shape[2])
     #-------------------------------------Create threads each thread display feature activation map in one color (RGB--------------------------------------------------------------------------------------
-    DispImg=np.zeros((Sy,Sx,3),dtype=np.float32) #image to be display
 
-    Pos = np.zeros(3, dtype=np.float32)  # Position of thread (The intesnity the activation map is displayed
-    Rate = np.zeros(3, dtype=np.float32)  # Rate of change in the thread intensity
-    Mx = np.zeros(3, dtype=np.float32)  # Normalizing factor for the activation
-    AcMap = np.zeros([3,Sy,Sx], dtype=np.float32)  # Index of Activation map used bey thread
+
+    NumThreads=18
+    Pos=np.zeros(NumThreads,dtype=np.float32) # Position of thread (The intesnity the activation map is displayed
+    Rate=np.zeros(NumThreads,dtype=np.float32) # Rate of change in the thread intensity
+    Mx = np.zeros(NumThreads, dtype=np.float32) # Normalizing factor for the activation
+    AcMap=np.zeros([NumThreads,Sy,Sx,1],dtype=np.float32) # Index of Activation map used bey thread
+    TColor=np.zeros([NumThreads,3],dtype=np.float32) # Color of thread
+
     #-----------------------------Create animation---------------------------------------------------------------------------------
     for itr in range(NumFrame):
+        DispImg = np.zeros((Sy, Sx, 3), dtype=np.float32)  # image to be display
         #time.sleep(0.01)
         print(itr)
-        for i in range(3): #If thread reach max intensity start decrease intensity of the feature map
+        for i in range(NumThreads): #If thread reach max intensity start decrease intensity of the feature map
             if Pos[i]>=255:
                Pos[i]=255
                Rate[i]=-np.abs(Rate[i])
             if Pos[i]<=0:  #If thread reach zero intensity replace the feature map the thread display
                Pos[i]=0
-               Rate[i]=np.random.rand()*7+0.2 # Choose intensity change rate
-               Ly=np.random.randint(1, Lr.__len__()-1)# Choose layer
-               AcMap[i]=ConIm[:,:,np.random.randint(Lr[Ly-1],Lr[Ly]+1)] # Chose activation map
-               Mx[i]=2.0/AcMap[i].max()
-            DispImg[:,:,i]=np.uint8(Mx[i]*AcMap[i]*Pos[i]) # Create frame from the combination of the activation map use by each thread
+               Rate[i]=np.random.rand()*7+0.2
+               Ly=np.random.randint(1, Lr.__len__()-1) # randomly pick layer
+               AcMap[i]=np.expand_dims(ConIm[:,:,np.random.randint(Lr[Ly-1],Lr[Ly]+1)],axis=2) # Pick activtion map
+               Mx[i]=1.0/AcMap[i].max()
+               TColor[i]=[np.random.rand(),np.random.rand(),np.random.rand()]
+               #TColor[i]*=255/TColor[i].max()
+            DispImg+=(np.concatenate((TColor[i,0]*AcMap[i],TColor[i,1]*AcMap[i],TColor[i,2]*AcMap[i]),axis=2)*Mx[i]*Pos[i])
+                #np.uint8(Mx[i]*ConIm[:,:,AcMap[i]]*Pos[i]) # Create frame from the combination of the activation map use by each thread
             Pos[i]+=Rate[i]
+        #DispImg/=NumThreads
+        DispImg[DispImg>255]=255
         #misc.imshow(DispImg*0.9+Image*0.1)
         #print(Rate)
         #print(Pos)
