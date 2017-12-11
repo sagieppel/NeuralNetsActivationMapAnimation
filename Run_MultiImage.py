@@ -1,11 +1,11 @@
 
 #Transform image to animation bases on its neural activation maps using VGG16 activation map
-#Display multiple feature depands on NumThread
+# This Mode recieve folder of images and create one animation that contain all of them
 #--------------------------------------------------------------------------------------------------------------------
 import tensorflow as tf # Demand tensorflow
 import numpy as np
 import scipy.misc as misc
-import sys
+import random
 import BuildNetVgg16
 import os
 import CheckVGG16Model
@@ -15,22 +15,23 @@ import cv2
 
 
 model_path="Model_Zoo/vgg16.npy"# "Path to pretrained vgg16 model for encoder"
-
+ImagesFolder="/home/sagi/Desktop/Painting/Similar sizes/"  #Where images for animation will be located
 #-------------------------------------------------------------------------------------------------------------------------
 CheckVGG16Model.CheckVGG16(model_path)# Check if pretrained vgg16 model avialable and if not try to download it
-Image = misc.imread('/home/sagi/TENSORFLOW/Vgg16ImagesAnimation/cat.jpg') # image to be use for animation
+ImagesNames=[]
+ImagesNames += [ImagesFolder+each for each in os.listdir(ImagesFolder) if each.endswith('.jpg') or each.endswith('.tif') or each.endswith('.png')] #Get list of images in folder
+random.shuffle(ImagesNames)
+Image = misc.imread(ImagesNames[0]) # image to be use for animation
+
 Sy,Sx,dp=Image.shape # get image size
 
 fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-VidOut = cv2.VideoWriter('XXXCat.avi',fourcc, 24, (Sx,Sy)) #ouput video file
-NumFrame=3000 # Number of frames in video
+VidOut = cv2.VideoWriter('marina5.avi',fourcc, 24, (Sx,Sy)) #ouput video file
+NumFrame=12000 # Number of frames in video
 ################################################################################################################################################################################
 def main(argv=None):
-      # .........................Placeholders for input image and labels........................................................................
-
-    image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name="input_image")  # Input image batch first dimension image number second dimension width third dimension height 4 dimension RGB
-
-    # -------------------------Build Net----------------------------------------------------------------------------------------------
+    # .........................Placeholders for input image and labels........................................................................
+    image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name="input_image")  # Input image batch first dimension image number second dimension width third dimension height 4 dimension RGB    # -------------------------Build Net----------------------------------------------------------------------------------------------
     Net = BuildNetVgg16.BUILD_NET_VGG16(vgg16_npy_path=model_path)  # Create class instance for the net
     Net.build(image)  # Build net and load intial weights (weights before training)
     # -------------------------Data reader for validation/testing images-----------------------------------------------------------------------------------------------------------------------------
@@ -38,9 +39,9 @@ def main(argv=None):
     sess = tf.Session() #Start Tensorflow session
     sess.run(tf.global_variables_initializer())
     #---------------------------------------Get Activation map of all layers of the net-----------------------------------------------
-    Lr, ConIm=GetAllActivationMaps(Net,image,Image,sess)
+
     #-------------------------------------Create threads each thread display feature activation map in one color (RGB--------------------------------------------------------------------------------------
-    NumThreads=18
+    NumThreads=17
     Pos=np.zeros(NumThreads,dtype=np.float32) # Position of thread (The intesnity the activation map is displayed
     Rate=np.zeros(NumThreads,dtype=np.float32) # Rate of change in the thread intensity
     Mx = np.zeros(NumThreads, dtype=np.float32) # Normalizing factor for the activation
@@ -48,7 +49,16 @@ def main(argv=None):
     TColor=np.zeros([NumThreads,3],dtype=np.float32) # Color of thread
 
     #-----------------------------Create animation---------------------------------------------------------------------------------
+    ImNum=0
     for itr in range(NumFrame):
+        if itr%(24*20)==0:
+            if ImNum>=len(ImagesNames): break
+            Image = misc.imread(ImagesNames[ImNum])
+            Image = misc.imresize(Image[:,:,0:3],[Sy,Sx])
+            Lr, ConIm = GetAllActivationMaps(Net, image, Image, sess)
+            ImNum+=1
+
+
         DispImg = np.zeros((Sy, Sx, 3), dtype=np.float32)  # image to be display
         #time.sleep(0.01)
         print(itr)
@@ -68,6 +78,7 @@ def main(argv=None):
                 #np.uint8(Mx[i]*ConIm[:,:,AcMap[i]]*Pos[i]) # Create frame from the combination of the activation map use by each thread
             Pos[i]+=Rate[i]
         #DispImg/=NumThreads
+        DispImg/=1.5
         DispImg[DispImg>255]=255
         #misc.imshow(DispImg*0.9+Image*0.1)
         #print(Rate)
